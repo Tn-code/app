@@ -14,6 +14,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { showInterstitial, showRewardedVideo } from '../services/adService';
+import { playSoundEvent } from '../services/soundService';
+import Confetti from '../components/Animations/Confetti';
 
 export default function QuizPlayScreen({ quiz, onFinish }) {
   const { colors } = useTheme();
@@ -23,6 +25,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [bonusUsed, setBonusUsed] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const timerRef = useRef(null);
@@ -32,7 +35,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const currentQuestion = questions[currentIndex];
   const useNativeDriver = Platform.OS !== 'web';
 
-  // Gestion du bouton retour Android (physique)
+  // Gestion du bouton retour Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       console.log('🔙 Retour physique Android détecté');
@@ -57,36 +60,23 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     ]).start();
   }, [currentIndex]);
 
-  // Fonction de confirmation de sortie (adaptée Web / Mobile)
   const showQuitConfirmation = () => {
-    console.log('🛑 Demande de confirmation pour quitter');
-
     if (Platform.OS === 'web') {
-      // Web : utiliser window.confirm (bloquant)
-      const confirmed = window.confirm(
-        'Voulez-vous vraiment quitter ? Votre progression sera perdue.'
-      );
+      const confirmed = window.confirm('Voulez-vous vraiment quitter ? Votre progression sera perdue.');
       if (confirmed) {
-        console.log('✅ Quitter le quiz (Web)');
         if (timerRef.current) clearTimeout(timerRef.current);
         onFinish();
       }
     } else {
-      // Mobile : utiliser Alert.alert avec boutons
       Alert.alert(
         'Quitter le quiz',
         'Voulez-vous vraiment quitter ? Votre progression sera perdue.',
         [
           { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Quitter',
-            style: 'destructive',
-            onPress: () => {
-              console.log('✅ Quitter le quiz (Mobile)');
-              if (timerRef.current) clearTimeout(timerRef.current);
-              onFinish();
-            },
-          },
+          { text: 'Quitter', style: 'destructive', onPress: () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+            onFinish();
+          } },
         ],
         { cancelable: false }
       );
@@ -94,13 +84,29 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   };
 
   const handleSelectOption = (index) => {
-    console.log('✅ Option cliquée:', index);
     if (showFeedback || isFinished) return;
     setSelectedOption(index);
     setShowFeedback(true);
 
     const isCorrect = index + 1 === currentQuestion.correctScore;
-    if (isCorrect) setScore(prev => prev + 10);
+    if (isCorrect) {
+      setScore(prev => prev + 10);
+      playSoundEvent('correct');
+      // Animation de rebond
+      Animated.spring(scaleAnim, {
+        toValue: 1.1,
+        friction: 2,
+        useNativeDriver: true,
+      }).start(() => {
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 3,
+          useNativeDriver: true,
+        }).start();
+      });
+    } else {
+      playSoundEvent('wrong');
+    }
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
@@ -117,7 +123,11 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
       });
     } else {
       setIsFinished(true);
-      showFinalResult();
+      playSoundEvent('complete');
+      setShowConfetti(true);
+      setTimeout(() => {
+        showFinalResult();
+      }, 3000); // Laisser le temps aux confettis
     }
   };
 
@@ -134,7 +144,16 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     Alert.alert(
       `${emoji} Quiz terminé !`,
       `${message}\n\nTon score : ${score} / ${totalPoints} points (${percentage}%)`,
-      [{ text: '🏠 Retour à la liste', onPress: () => { setIsFinished(false); onFinish(); } }]
+      [
+        {
+          text: '🏠 Retour à la liste',
+          onPress: () => {
+            setIsFinished(false);
+            setShowConfetti(false);
+            onFinish();
+          },
+        },
+      ]
     );
   };
 
@@ -155,10 +174,15 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.gradient}>
+          <Confetti active={showConfetti} onFinish={() => setShowConfetti(false)} />
           <View style={styles.center}>
             <Text style={styles.finishedText}>🎯 Quiz terminé !</Text>
             <Text style={styles.finishedScore}>Score: {score} points</Text>
-            <TouchableOpacity style={styles.finishButton} onPress={onFinish}>
+            <TouchableOpacity style={styles.finishButton} onPress={() => {
+              setIsFinished(false);
+              setShowConfetti(false);
+              onFinish();
+            }}>
               <Text style={styles.finishButtonText}>🏠 Retour</Text>
             </TouchableOpacity>
           </View>
@@ -187,7 +211,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              console.log('🔙 Bouton retour cliqué');
+              playSoundEvent('click');
               showQuitConfirmation();
             }}
             style={styles.backButton}
@@ -247,7 +271,10 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
               <TouchableOpacity
                 key={idx}
                 style={optionStyle}
-                onPress={() => handleSelectOption(idx)}
+                onPress={() => {
+                  playSoundEvent('click');
+                  handleSelectOption(idx);
+                }}
                 disabled={showFeedback || isFinished}
                 activeOpacity={0.7}
               >
@@ -274,7 +301,10 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
 
         <TouchableOpacity
           style={[styles.bonusButton, bonusUsed && styles.bonusUsed]}
-          onPress={handleWatchRewardedVideo}
+          onPress={() => {
+            playSoundEvent('click');
+            handleWatchRewardedVideo();
+          }}
           disabled={bonusUsed}
         >
           <Text style={styles.bonusButtonText}>
@@ -286,6 +316,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   );
 }
 
+// Styles inchangés (identiques à la version précédente)
 const styles = StyleSheet.create({
   container: { flex: 1 },
   gradient: { flex: 1 },

@@ -8,6 +8,7 @@ import AdminDashboard from './src/screens/AdminDashboard';
 import UserDashboard from './src/screens/UserDashboard';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { initStartio } from './src/services/adService';
+import { loadSounds } from './src/services/soundService';
 
 const ADMIN_EMAIL = 'houssinetrabelsi6@gmail.com';
 
@@ -17,7 +18,9 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => {
+    // Initialiser les services
     initStartio();
+    loadSounds();
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -43,13 +46,10 @@ export default function App() {
   }
 
   const isAdmin = user.email === ADMIN_EMAIL;
-
-  // L'écran Admin n'utilise pas le thème (il garde son style propre)
   if (isAdmin) {
     return <AdminDashboard />;
   }
 
-  // L'écran Utilisateur utilise le ThemeProvider
   return (
     <ThemeProvider>
       <UserDashboard />

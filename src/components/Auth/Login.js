@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,20 +9,77 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth } from '../../../firebase';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
+// Composant de bulle animée (pour le fond)
+const Bubble = ({ delay, size, x }) => {
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animate = () => {
+      Animated.sequence([
+        Animated.timing(translateY, {
+          toValue: -500,
+          duration: 8000 + Math.random() * 4000,
+          useNativeDriver: true,
+          delay: delay,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ]).start(() => animate());
+    };
+    animate();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.bubble,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          left: x,
+          transform: [{ translateY }],
+          opacity: 0.3,
+        },
+      ]}
+    />
+  );
+};
+
 export default function Login({ onSwitchToSignup }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert('Oups !', 'Il faut remplir tous les champs 😅');
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
     setLoading(true);
@@ -43,7 +100,7 @@ export default function Login({ onSwitchToSignup }) {
         default:
           message = error.message;
       }
-      Alert.alert('Erreur', message);
+      Alert.alert('Erreur de connexion', message);
     } finally {
       setLoading(false);
     }
@@ -51,13 +108,13 @@ export default function Login({ onSwitchToSignup }) {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      Alert.alert('Oups !', 'Entre ton email pour réinitialiser 😊');
+      Alert.alert('Erreur', 'Veuillez entrer votre email.');
       return;
     }
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
-      Alert.alert('Succès', 'Un email de réinitialisation a été envoyé ! 📧');
+      Alert.alert('Succès', 'Un email de réinitialisation a été envoyé.');
     } catch {
       Alert.alert('Erreur', 'Impossible d\'envoyer l\'email.');
     } finally {
@@ -71,44 +128,64 @@ export default function Login({ onSwitchToSignup }) {
       style={styles.container}
     >
       <LinearGradient
-        colors={['#FF6B6B', '#FFE66D', '#4ECDC4']}
+        colors={['#FF6B6B', '#FFE66D', '#4ECDC4', '#45B7D1']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
+        {/* Bulles d'arrière-plan */}
+        <Bubble delay={0} size={60} x="10%" />
+        <Bubble delay={2000} size={40} x="30%" />
+        <Bubble delay={4000} size={80} x="60%" />
+        <Bubble delay={1500} size={50} x="80%" />
+        <Bubble delay={3000} size={70} x="20%" />
+        <Bubble delay={5000} size={45} x="70%" />
+
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.card}>
-            <View style={styles.header}>
-              <Text style={styles.emoji}>🎈</Text>
-              <Text style={styles.title}>Bienvenue !</Text>
-              <Text style={styles.subtitle}>Connecte-toi pour jouer 🚀</Text>
+          <Animated.View
+            style={[
+              styles.card,
+              {
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
+            <View style={styles.iconContainer}>
+              <Text style={styles.icon}>🎈</Text>
             </View>
+            <Text style={styles.title}>Bienvenue !</Text>
+            <Text style={styles.subtitle}>Prêt à t'amuser ? 🚀</Text>
 
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>📧 Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="exemple@email.com"
-                placeholderTextColor="#A0AEC0"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="exemple@email.com"
+                  placeholderTextColor="#A0AEC0"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                />
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>🔒 Mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor="#A0AEC0"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoComplete="password"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#A0AEC0"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoComplete="password"
+                />
+              </View>
             </View>
 
             <TouchableOpacity
@@ -116,7 +193,7 @@ export default function Login({ onSwitchToSignup }) {
               onPress={handleForgotPassword}
               disabled={loading}
             >
-              <Text style={styles.forgotText}>Mot de passe oublié ? 🤔</Text>
+              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -126,24 +203,24 @@ export default function Login({ onSwitchToSignup }) {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#4F46E5', '#667EEA']}
-                style={styles.buttonGradient}
+                colors={['#FF6B6B', '#FFE66D']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
               >
                 <Text style={styles.signInButtonText}>
-                  {loading ? '⏳ Connexion...' : '🚀 Se connecter'}
+                  {loading ? '🔐 Connexion...' : '🎯 Se connecter'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Tu n'as pas de compte ? </Text>
+              <Text style={styles.footerText}>Pas encore de compte ? </Text>
               <TouchableOpacity onPress={onSwitchToSignup} disabled={loading}>
-                <Text style={styles.footerLink}>✨ S'inscrire</Text>
+                <Text style={styles.footerLink}>S'inscrire 🎉</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
       </LinearGradient>
     </KeyboardAvoidingView>
@@ -160,112 +237,102 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
+  bubble: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 35,
     padding: 30,
     width: '100%',
     maxWidth: 400,
     ...Platform.select({
       web: {
-        boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
       },
       default: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
-        shadowRadius: 30,
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
         elevation: 10,
       },
     }),
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  emoji: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
+  iconContainer: { alignItems: 'center', marginBottom: 16 },
+  icon: { fontSize: 70 },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#2D3748',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 18,
-    color: '#4A5568',
-    marginTop: 4,
+    color: '#718096',
+    textAlign: 'center',
+    marginBottom: 30,
   },
-  inputContainer: {
-    marginBottom: 20,
-  },
+  inputContainer: { marginBottom: 20 },
   inputLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    fontSize: 18,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    color: '#2D3748',
-  },
-  forgotButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
-  },
-  forgotText: {
-    color: '#4F46E5',
     fontSize: 16,
     fontWeight: '600',
+    color: '#4A5568',
+    marginBottom: 6,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7FAFC',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#2D3748',
+  },
+  forgotButton: { alignSelf: 'flex-end', marginBottom: 24 },
+  forgotText: {
+    color: '#4F46E5',
+    fontSize: 14,
+    fontWeight: '500',
   },
   signInButton: {
-    borderRadius: 30,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 20,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 4px 10px rgba(79,70,229,0.3)',
-      },
-      default: {
-        shadowColor: '#4F46E5',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 6,
-      },
-    }),
+    marginBottom: 16,
   },
   buttonGradient: {
     paddingVertical: 16,
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
+  buttonDisabled: { opacity: 0.6 },
   signInButtonText: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   footerText: {
-    fontSize: 17,
-    color: '#4A5568',
+    color: '#718096',
+    fontSize: 15,
   },
   footerLink: {
-    fontSize: 17,
-    fontWeight: 'bold',
     color: '#4F46E5',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
