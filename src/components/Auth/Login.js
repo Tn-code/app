@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth } from '../../../firebase';
@@ -21,7 +22,7 @@ export default function Login({ onSwitchToSignup }) {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+      Alert.alert('Oups !', 'Il faut remplir tous les champs 😅');
       return;
     }
     setLoading(true);
@@ -42,7 +43,7 @@ export default function Login({ onSwitchToSignup }) {
         default:
           message = error.message;
       }
-      Alert.alert('Erreur de connexion', message);
+      Alert.alert('Erreur', message);
     } finally {
       setLoading(false);
     }
@@ -50,13 +51,13 @@ export default function Login({ onSwitchToSignup }) {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      Alert.alert('Erreur', 'Veuillez entrer votre email.');
+      Alert.alert('Oups !', 'Entre ton email pour réinitialiser 😊');
       return;
     }
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
-      Alert.alert('Succès', 'Un email de réinitialisation a été envoyé.');
+      Alert.alert('Succès', 'Un email de réinitialisation a été envoyé ! 📧');
     } catch {
       Alert.alert('Erreur', 'Impossible d\'envoyer l\'email.');
     } finally {
@@ -70,50 +71,44 @@ export default function Login({ onSwitchToSignup }) {
       style={styles.container}
     >
       <LinearGradient
-        colors={['#667EEA', '#764BA2']}
+        colors={['#FF6B6B', '#FFE66D', '#4ECDC4']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.card}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>🔐</Text>
-            </View>
-            <Text style={styles.title}>Bienvenue</Text>
-            <Text style={styles.subtitle}>Connectez-vous à votre compte</Text>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>📧</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="exemple@email.com"
-                  placeholderTextColor="#A0AEC0"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                />
-              </View>
+            <View style={styles.header}>
+              <Text style={styles.emoji}>🎈</Text>
+              <Text style={styles.title}>Bienvenue !</Text>
+              <Text style={styles.subtitle}>Connecte-toi pour jouer 🚀</Text>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Mot de passe</Text>
-              <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  placeholderTextColor="#A0AEC0"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  autoComplete="password"
-                />
-              </View>
+              <Text style={styles.inputLabel}>📧 Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="exemple@email.com"
+                placeholderTextColor="#A0AEC0"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>🔒 Mot de passe</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor="#A0AEC0"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="password"
+              />
             </View>
 
             <TouchableOpacity
@@ -121,7 +116,7 @@ export default function Login({ onSwitchToSignup }) {
               onPress={handleForgotPassword}
               disabled={loading}
             >
-              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
+              <Text style={styles.forgotText}>Mot de passe oublié ? 🤔</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -130,15 +125,22 @@ export default function Login({ onSwitchToSignup }) {
               disabled={loading}
               activeOpacity={0.8}
             >
-              <Text style={styles.signInButtonText}>
-                {loading ? 'Connexion...' : 'Se connecter'}
-              </Text>
+              <LinearGradient
+                colors={['#4F46E5', '#667EEA']}
+                style={styles.buttonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.signInButtonText}>
+                  {loading ? '⏳ Connexion...' : '🚀 Se connecter'}
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Vous n'avez pas de compte ? </Text>
+              <Text style={styles.footerText}>Tu n'as pas de compte ? </Text>
               <TouchableOpacity onPress={onSwitchToSignup} disabled={loading}>
-                <Text style={styles.footerLink}>S'inscrire</Text>
+                <Text style={styles.footerLink}>✨ S'inscrire</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -159,52 +161,77 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 40,
     padding: 30,
     width: '100%',
     maxWidth: 400,
-    // Utilisation de boxShadow pour web et shadow pour mobile
     ...Platform.select({
       web: {
-        boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
       },
       default: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.2,
-        shadowRadius: 20,
+        shadowOpacity: 0.15,
+        shadowRadius: 30,
         elevation: 10,
       },
     }),
   },
-  iconContainer: { alignItems: 'center', marginBottom: 20 },
-  icon: { fontSize: 60 },
-  title: { fontSize: 28, fontWeight: '700', color: '#2D3748', textAlign: 'center', marginBottom: 6 },
-  subtitle: { fontSize: 16, color: '#718096', textAlign: 'center', marginBottom: 30 },
-  inputContainer: { marginBottom: 20 },
-  inputLabel: { fontSize: 14, fontWeight: '600', color: '#4A5568', marginBottom: 6 },
-  inputWrapper: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
-    backgroundColor: '#F7FAFC',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 16,
+    marginBottom: 30,
   },
-  inputIcon: { fontSize: 18, marginRight: 12, color: '#A0AEC0' },
-  input: { flex: 1, paddingVertical: 14, fontSize: 16, color: '#2D3748' },
-  forgotButton: { alignSelf: 'flex-end', marginBottom: 24 },
-  forgotText: { color: '#4F46E5', fontSize: 14, fontWeight: '500' },
+  emoji: {
+    fontSize: 60,
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2D3748',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#4A5568',
+    marginTop: 4,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2D3748',
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    fontSize: 18,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    color: '#2D3748',
+  },
+  forgotButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotText: {
+    color: '#4F46E5',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   signInButton: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
+    borderRadius: 30,
+    overflow: 'hidden',
+    marginBottom: 20,
     ...Platform.select({
       web: {
-        boxShadow: '0 4px 6px rgba(79,70,229,0.3)',
+        boxShadow: '0 4px 10px rgba(79,70,229,0.3)',
       },
       default: {
         shadowColor: '#4F46E5',
@@ -215,9 +242,30 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  buttonDisabled: { opacity: 0.7 },
-  signInButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  footerText: { color: '#718096', fontSize: 15 },
-  footerLink: { color: '#4F46E5', fontSize: 15, fontWeight: '600' },
+  buttonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  signInButtonText: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  footerText: {
+    fontSize: 17,
+    color: '#4A5568',
+  },
+  footerLink: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#4F46E5',
+  },
 });
