@@ -6,6 +6,7 @@ import Login from './src/components/Auth/Login';
 import Signup from './src/components/Auth/Signup';
 import AdminDashboard from './src/screens/AdminDashboard';
 import UserDashboard from './src/screens/UserDashboard';
+import { initStartio } from './src/services/adService';
 
 const ADMIN_EMAIL = 'houssinetrabelsi6@gmail.com';
 
@@ -15,6 +16,9 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => {
+    // Initialiser Start.io
+    initStartio();
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);

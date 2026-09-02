@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,17 +14,21 @@ import { auth } from '../../firebase';
 import { Alert } from 'react-native';
 import QuizListScreen from './QuizListScreen';
 import QuizPlayScreen from './QuizPlayScreen';
+import NativeAd from '../components/Ads/NativeAd';
+import { showBanner } from '../services/adService';
 
 export default function UserDashboard() {
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
+  useEffect(() => {
+    showBanner('bottom');
+  }, []);
+
   const handleSelectQuiz = (quiz) => {
-    console.log('UserDashboard: Quiz sélectionné', quiz); // LOG
     setSelectedQuiz(quiz);
   };
 
   const handleFinishQuiz = () => {
-    console.log('UserDashboard: Quiz terminé'); // LOG
     setSelectedQuiz(null);
   };
 
@@ -75,6 +79,9 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
             <Text style={styles.sectionTitle}>📚 Quiz disponibles</Text>
             <QuizListScreen onSelectQuiz={onSelectQuiz} />
           </View>
+
+          {/* Native Ad - User Profile */}
+          <NativeAd placement="user_profile" />
 
           <View style={styles.badgeContainer}>
             <Text style={styles.badgeTitle}>🏆 Tes succès</Text>
@@ -137,9 +144,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
     alignItems: 'center',
-    ...Platform.select({
-      web: { backdropFilter: 'blur(10px)' },
-    }),
+    ...Platform.select({ web: { backdropFilter: 'blur(10px)' } }),
   },
   welcomeEmoji: { fontSize: 50, marginBottom: 8 },
   welcomeText: {
@@ -178,6 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
     borderRadius: 24,
     padding: 16,
+    marginTop: 8,
     ...Platform.select({ web: { backdropFilter: 'blur(10px)' } }),
   },
   badgeTitle: {

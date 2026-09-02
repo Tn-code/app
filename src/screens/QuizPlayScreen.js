@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { showInterstitial, showRewardedVideo } from '../services/adService';
 
 export default function QuizPlayScreen({ quiz, onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -18,6 +19,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const [score, setScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [bonusUsed, setBonusUsed] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const timerRef = useRef(null);
@@ -27,49 +29,28 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const currentQuestion = questions[currentIndex];
   const useNativeDriver = Platform.OS !== 'web';
 
-  // Nettoyer le timer au démontage
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
 
-  // Réinitialiser l'animation à chaque question
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        useNativeDriver,
-      }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver }),
     ]).start();
   }, [currentIndex]);
 
   const handleSelectOption = (index) => {
-    console.log('Option cliquée:', index);
     if (showFeedback || isFinished) return;
-
     setSelectedOption(index);
     setShowFeedback(true);
 
-    // Vérifier si la réponse est correcte (10 points)
     const isCorrect = index + 1 === currentQuestion.correctScore;
-    if (isCorrect) {
-      setScore(prev => prev + 10);
-    }
+    if (isCorrect) setScore(prev => prev + 10);
 
-    // Démarrer le timer pour passer à la question suivante (après 1.5 secondes)
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-
+    if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       goToNextQuestion();
     }, 1500);
@@ -77,62 +58,61 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
 
   const goToNextQuestion = () => {
     if (currentIndex + 1 < totalQuestions) {
-      // Passer à la question suivante
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver,
-      }).start(() => {
+      Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver }).start(() => {
         setCurrentIndex(currentIndex + 1);
         setSelectedOption(null);
         setShowFeedback(false);
       });
     } else {
-      // Fin du quiz
       setIsFinished(true);
-      const percentage = Math.round((score / (totalQuestions * 10)) * 100);
-      let emoji = '🎉';
-      let message = 'Super travail !';
-      if (percentage < 40) {
-        emoji = '💪';
-        message = 'Continue comme ça, tu vas y arriver !';
-      } else if (percentage < 70) {
-        emoji = '😊';
-        message = 'Pas mal ! Un peu d\'entraînement et ce sera parfait !';
-      } else if (percentage < 90) {
-        emoji = '🌟';
-        message = 'Excellent ! Tu es vraiment doué !';
-      } else {
-        emoji = '🏆';
-        message = 'Génial ! Tu as tout déchiré !';
-      }
-
-      Alert.alert(
-        `${emoji} Quiz terminé !`,
-        `${message}\n\nTon score : ${score} / ${totalQuestions * 10} points (${percentage}%)`,
-        [
-          {
-            text: '🏠 Retour à la liste',
-            onPress: () => {
-              setIsFinished(false);
-              onFinish();
-            },
-          },
-        ]
-      );
+      showFinalResult();
     }
   };
 
-  // Si le quiz est fini, on bloque les interactions
+  const showFinalResult = async () => {
+    // Afficher un interstitiel à la fin du quiz
+    await showInterstitial();
+
+    const totalPoints = totalQuestions * 10;
+    const percentage = Math.round((score / totalPoints) * 100);
+    let emoji = '🎉', message = 'Super travail !';
+    if (percentage < 40) { emoji = '💪'; message = 'Continue comme ça, tu vas y arriver !'; }
+    else if (percentage < 70) { emoji = '😊'; message = 'Pas mal ! Un peu d\'entraînement et ce sera parfait !'; }
+    else if (percentage < 90) { emoji = '🌟'; message = 'Excellent ! Tu es vraiment doué !'; }
+    else { emoji = '🏆'; message = 'Génial ! Tu as tout déchiré !'; }
+
+    Alert.alert(
+      `${emoji} Quiz terminé !`,
+      `${message}\n\nTon score : ${score} / ${totalPoints} points (${percentage}%)`,
+      [
+        {
+          text: '🏠 Retour à la liste',
+          onPress: () => {
+            setIsFinished(false);
+            onFinish();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleWatchRewardedVideo = async () => {
+    if (bonusUsed) {
+      Alert.alert('Info', 'Tu as déjà utilisé le bonus pour ce quiz.');
+      return;
+    }
+    const watched = await showRewardedVideo();
+    if (watched) {
+      setScore(prev => prev + 5);
+      setBonusUsed(true);
+      Alert.alert('🎉 Merci !', '+5 points bonus !');
+    }
+  };
+
   if (isFinished) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient
-          colors={['#FF6B6B', '#FFE66D', '#4ECDC4']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
+        <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.gradient}>
           <View style={styles.center}>
             <Text style={styles.finishedText}>🎯 Quiz terminé !</Text>
             <Text style={styles.finishedScore}>Score: {score} points</Text>
@@ -161,69 +141,35 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#FF6B6B', '#FFE66D', '#4ECDC4']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        {/* Header avec score */}
+      <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.gradient}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              if (isFinished) return;
-              Alert.alert(
-                'Quitter le quiz',
-                'Voulez-vous vraiment quitter ? Votre progression sera perdue.',
-                [
-                  { text: 'Annuler', style: 'cancel' },
-                  { text: 'Quitter', style: 'destructive', onPress: onFinish },
-                ]
-              );
+              Alert.alert('Quitter le quiz', 'Voulez-vous vraiment quitter ?', [
+                { text: 'Annuler', style: 'cancel' },
+                { text: 'Quitter', style: 'destructive', onPress: onFinish },
+              ]);
             }}
             style={styles.backButton}
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {quiz.title}
-          </Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>{quiz.title}</Text>
           <View style={styles.scoreBadge}>
             <Text style={styles.scoreBadgeText}>⭐ {score}</Text>
           </View>
         </View>
 
-        {/* Progression */}
         <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>
-            🎯 {currentIndex + 1}/{totalQuestions}
-          </Text>
+          <Text style={styles.progressText}>🎯 {currentIndex + 1}/{totalQuestions}</Text>
           <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${((currentIndex + 1) / totalQuestions) * 100}%` },
-              ]}
-            />
+            <View style={[styles.progressFill, { width: `${((currentIndex + 1) / totalQuestions) * 100}%` }]} />
           </View>
         </View>
 
-        {/* Question avec animation */}
-        <Animated.View
-          style={[
-            styles.questionContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
+        <Animated.View style={[styles.questionContainer, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
           {currentQuestion.image ? (
-            <Image
-              source={{ uri: currentQuestion.image }}
-              style={styles.questionImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: currentQuestion.image }} style={styles.questionImage} resizeMode="cover" />
           ) : (
             <View style={styles.questionImagePlaceholder}>
               <Text style={styles.questionImageEmoji}>🤔</Text>
@@ -232,7 +178,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
           <Text style={styles.questionText}>{currentQuestion.text}</Text>
         </Animated.View>
 
-        {/* Options */}
         <View style={styles.optionsContainer}>
           {currentQuestion.options.map((option, idx) => {
             const isSelected = selectedOption === idx;
@@ -269,18 +214,13 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
                   <Text style={styles.optionLetterText}>{options[idx]}</Text>
                 </View>
                 <Text style={textStyle}>{option}</Text>
-                {showFeedback && isCorrect && (
-                  <Text style={styles.feedbackIcon}>✅</Text>
-                )}
-                {showFeedback && isSelected && !isCorrect && (
-                  <Text style={styles.feedbackIcon}>❌</Text>
-                )}
+                {showFeedback && isCorrect && <Text style={styles.feedbackIcon}>✅</Text>}
+                {showFeedback && isSelected && !isCorrect && <Text style={styles.feedbackIcon}>❌</Text>}
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* Indicateur de progression (quand feedback est affiché) */}
         {showFeedback && (
           <View style={styles.feedbackContainer}>
             <Text style={styles.feedbackText}>
@@ -290,6 +230,17 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
             </Text>
           </View>
         )}
+
+        {/* Bouton vidéo récompensée (bonus) */}
+        <TouchableOpacity
+          style={[styles.bonusButton, bonusUsed && styles.bonusUsed]}
+          onPress={handleWatchRewardedVideo}
+          disabled={bonusUsed}
+        >
+          <Text style={styles.bonusButtonText}>
+            🎬 {bonusUsed ? 'Bonus utilisé' : 'Gagner +5 points (vidéo)'}
+          </Text>
+        </TouchableOpacity>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -359,9 +310,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 16,
     ...Platform.select({
-      web: {
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-      },
+      web: { boxShadow: '0 4px 8px rgba(0,0,0,0.1)' },
       default: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -383,7 +332,7 @@ const styles = StyleSheet.create({
   },
   questionImageEmoji: { fontSize: 50 },
   questionText: { fontSize: 20, fontWeight: 'bold', color: '#2D3748', textAlign: 'center' },
-  optionsContainer: { paddingHorizontal: 16, marginBottom: 12 },
+  optionsContainer: { paddingHorizontal: 16, marginBottom: 8 },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -392,9 +341,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 10,
     ...Platform.select({
-      web: {
-        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-      },
+      web: { boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
       default: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -413,45 +360,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  optionLetterText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4A5568',
-  },
-  optionLetterCorrect: {
-    backgroundColor: '#10B981',
-  },
-  optionLetterWrong: {
-    backgroundColor: '#EF4444',
-  },
-  optionLetterSelected: {
-    backgroundColor: '#4F46E5',
-  },
-  optionSelected: {
-    backgroundColor: 'rgba(79, 70, 229, 0.15)',
-    borderWidth: 2,
-    borderColor: '#4F46E5',
-  },
-  optionCorrect: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderWidth: 2,
-    borderColor: '#10B981',
-  },
-  optionWrong: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    borderWidth: 2,
-    borderColor: '#EF4444',
-  },
+  optionLetterText: { fontSize: 14, fontWeight: 'bold', color: '#4A5568' },
+  optionLetterCorrect: { backgroundColor: '#10B981' },
+  optionLetterWrong: { backgroundColor: '#EF4444' },
+  optionLetterSelected: { backgroundColor: '#4F46E5' },
+  optionSelected: { backgroundColor: 'rgba(79,70,229,0.15)', borderWidth: 2, borderColor: '#4F46E5' },
+  optionCorrect: { backgroundColor: 'rgba(16,185,129,0.2)', borderWidth: 2, borderColor: '#10B981' },
+  optionWrong: { backgroundColor: 'rgba(239,68,68,0.2)', borderWidth: 2, borderColor: '#EF4444' },
   optionText: { fontSize: 16, color: '#1A1A1A', flex: 1 },
   optionTextSelected: { color: '#4F46E5' },
   optionTextCorrect: { color: '#065F46' },
   optionTextWrong: { color: '#991B1B' },
   feedbackIcon: { fontSize: 20, marginLeft: 8 },
-  feedbackContainer: {
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginTop: 4,
-  },
+  feedbackContainer: { paddingHorizontal: 20, alignItems: 'center', marginTop: 4 },
   feedbackText: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -487,8 +408,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.5)',
   },
-  finishButtonText: {
-    fontSize: 18,
+  finishButtonText: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF' },
+  bonusButton: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,215,0,0.3)',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.5)',
+  },
+  bonusUsed: {
+    backgroundColor: 'rgba(128,128,128,0.3)',
+    borderColor: 'rgba(128,128,128,0.5)',
+  },
+  bonusButtonText: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },

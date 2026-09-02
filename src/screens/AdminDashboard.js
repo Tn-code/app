@@ -5,6 +5,7 @@ import Header from '../components/common/Header';
 import QuizForm from '../components/Quiz/QuizForm';
 import QuizItem from '../components/Quiz/QuizItem';
 import Button from '../components/common/Button';
+import { showBanner } from '../services/adService';
 
 export default function AdminDashboard() {
   const [quizzes, setQuizzes] = useState([]);
@@ -14,12 +15,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadQuizzes();
+    showBanner('bottom');
   }, []);
 
   const loadQuizzes = async () => {
     try {
       const data = await getQuizzes();
-      console.log('Quiz chargés dans AdminDashboard:', data); // LOG
       setQuizzes(data);
     } catch (error) {
       console.error('Erreur chargement quiz:', error);
@@ -32,7 +33,6 @@ export default function AdminDashboard() {
   };
 
   const handleEdit = (quiz) => {
-    console.log('Édition du quiz:', quiz); // LOG
     setEditingQuiz(quiz);
     setShowForm(true);
   };
@@ -47,10 +47,8 @@ export default function AdminDashboard() {
     try {
       const { saveQuiz, updateQuiz } = await import('../services/quizService');
       if (editingQuiz) {
-        console.log('Mise à jour du quiz:', editingQuiz.id, quizData);
         await updateQuiz(editingQuiz.id, quizData);
       } else {
-        console.log('Création d\'un nouveau quiz:', quizData);
         await saveQuiz({ ...quizData, createdBy: 'admin' });
       }
       await loadQuizzes();
@@ -64,12 +62,7 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = (quizId) => {
-    console.log('Suppression dans AdminDashboard, quizId:', quizId);
-    setQuizzes(prevQuizzes => {
-      const filtered = prevQuizzes.filter(q => q.id !== quizId);
-      console.log('Nouvelle liste de quiz après suppression:', filtered);
-      return filtered;
-    });
+    setQuizzes(prevQuizzes => prevQuizzes.filter(q => q.id !== quizId));
   };
 
   if (showForm) {
