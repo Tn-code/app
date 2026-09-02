@@ -15,9 +15,12 @@ import { Alert } from 'react-native';
 import QuizListScreen from './QuizListScreen';
 import QuizPlayScreen from './QuizPlayScreen';
 import NativeAd from '../components/Ads/NativeAd';
+import ThemePicker from '../components/common/ThemePicker';
+import { useTheme } from '../context/ThemeContext';
 import { showBanner } from '../services/adService';
 
 export default function UserDashboard() {
+  const { colors } = useTheme();
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
   useEffect(() => {
@@ -48,10 +51,12 @@ export default function UserDashboard() {
 }
 
 function KidsDashboard({ onLogout, onSelectQuiz }) {
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={['#FF6B6B', '#FFE66D', '#4ECDC4', '#45B7D1', '#96CEB4']}
+        colors={colors.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -80,7 +85,6 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
             <QuizListScreen onSelectQuiz={onSelectQuiz} />
           </View>
 
-          {/* Native Ad - User Profile */}
           <NativeAd placement="user_profile" />
 
           <View style={styles.badgeContainer}>
@@ -100,6 +104,8 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
               </View>
             </View>
           </View>
+
+          <ThemePicker />
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
@@ -184,6 +190,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 16,
     marginTop: 8,
+    marginBottom: 16,
     ...Platform.select({ web: { backdropFilter: 'blur(10px)' } }),
   },
   badgeTitle: {

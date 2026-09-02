@@ -6,6 +6,7 @@ import Login from './src/components/Auth/Login';
 import Signup from './src/components/Auth/Signup';
 import AdminDashboard from './src/screens/AdminDashboard';
 import UserDashboard from './src/screens/UserDashboard';
+import { ThemeProvider } from './src/context/ThemeContext';
 import { initStartio } from './src/services/adService';
 
 const ADMIN_EMAIL = 'houssinetrabelsi6@gmail.com';
@@ -16,7 +17,6 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => {
-    // Initialiser Start.io
     initStartio();
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -43,7 +43,18 @@ export default function App() {
   }
 
   const isAdmin = user.email === ADMIN_EMAIL;
-  return isAdmin ? <AdminDashboard /> : <UserDashboard />;
+
+  // L'écran Admin n'utilise pas le thème (il garde son style propre)
+  if (isAdmin) {
+    return <AdminDashboard />;
+  }
+
+  // L'écran Utilisateur utilise le ThemeProvider
+  return (
+    <ThemeProvider>
+      <UserDashboard />
+    </ThemeProvider>
+  );
 }
 
 const styles = StyleSheet.create({

@@ -9,11 +9,14 @@ import {
   Alert,
   Animated,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
 import { showInterstitial, showRewardedVideo } from '../services/adService';
 
 export default function QuizPlayScreen({ quiz, onFinish }) {
+  const { colors } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [score, setScore] = useState(0);
@@ -29,12 +32,24 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const currentQuestion = questions[currentIndex];
   const useNativeDriver = Platform.OS !== 'web';
 
+  // Gestion du bouton retour Android (physique)
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      console.log('🔙 Retour physique Android détecté');
+      showQuitConfirmation();
+      return true;
+    });
+    return () => backHandler.remove();
+  }, []);
+
+  // Nettoyer le timer
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
 
+  // Animation de transition
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver }),
@@ -42,7 +57,44 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     ]).start();
   }, [currentIndex]);
 
+  // Fonction de confirmation de sortie (adaptée Web / Mobile)
+  const showQuitConfirmation = () => {
+    console.log('🛑 Demande de confirmation pour quitter');
+
+    if (Platform.OS === 'web') {
+      // Web : utiliser window.confirm (bloquant)
+      const confirmed = window.confirm(
+        'Voulez-vous vraiment quitter ? Votre progression sera perdue.'
+      );
+      if (confirmed) {
+        console.log('✅ Quitter le quiz (Web)');
+        if (timerRef.current) clearTimeout(timerRef.current);
+        onFinish();
+      }
+    } else {
+      // Mobile : utiliser Alert.alert avec boutons
+      Alert.alert(
+        'Quitter le quiz',
+        'Voulez-vous vraiment quitter ? Votre progression sera perdue.',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Quitter',
+            style: 'destructive',
+            onPress: () => {
+              console.log('✅ Quitter le quiz (Mobile)');
+              if (timerRef.current) clearTimeout(timerRef.current);
+              onFinish();
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  };
+
   const handleSelectOption = (index) => {
+    console.log('✅ Option cliquée:', index);
     if (showFeedback || isFinished) return;
     setSelectedOption(index);
     setShowFeedback(true);
@@ -70,9 +122,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   };
 
   const showFinalResult = async () => {
-    // Afficher un interstitiel à la fin du quiz
     await showInterstitial();
-
     const totalPoints = totalQuestions * 10;
     const percentage = Math.round((score / totalPoints) * 100);
     let emoji = '🎉', message = 'Super travail !';
@@ -84,15 +134,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     Alert.alert(
       `${emoji} Quiz terminé !`,
       `${message}\n\nTon score : ${score} / ${totalPoints} points (${percentage}%)`,
-      [
-        {
-          text: '🏠 Retour à la liste',
-          onPress: () => {
-            setIsFinished(false);
-            onFinish();
-          },
-        },
-      ]
+      [{ text: '🏠 Retour à la liste', onPress: () => { setIsFinished(false); onFinish(); } }]
     );
   };
 
@@ -111,8 +153,8 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
 
   if (isFinished) {
     return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.gradient}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.gradient}>
           <View style={styles.center}>
             <Text style={styles.finishedText}>🎯 Quiz terminé !</Text>
             <Text style={styles.finishedScore}>Score: {score} points</Text>
@@ -127,8 +169,8 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
 
   if (!currentQuestion) {
     return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#FF6B6B', '#FFE66D']} style={styles.gradient}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.gradient}>
           <View style={styles.center}>
             <Text style={styles.errorText}>Aucune question dans ce quiz.</Text>
           </View>
@@ -140,22 +182,21 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const options = ['A', 'B', 'C', 'D'];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#FF6B6B', '#FFE66D', '#4ECDC4']} style={styles.gradient}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.gradient}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              Alert.alert('Quitter le quiz', 'Voulez-vous vraiment quitter ?', [
-                { text: 'Annuler', style: 'cancel' },
-                { text: 'Quitter', style: 'destructive', onPress: onFinish },
-              ]);
+              console.log('🔙 Bouton retour cliqué');
+              showQuitConfirmation();
             }}
             style={styles.backButton}
+            activeOpacity={0.6}
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{quiz.title}</Text>
-          <View style={styles.scoreBadge}>
+          <View style={[styles.scoreBadge, { backgroundColor: 'rgba(255,255,255,0.3)' }]}>
             <Text style={styles.scoreBadgeText}>⭐ {score}</Text>
           </View>
         </View>
@@ -163,7 +204,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
         <View style={styles.progressContainer}>
           <Text style={styles.progressText}>🎯 {currentIndex + 1}/{totalQuestions}</Text>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${((currentIndex + 1) / totalQuestions) * 100}%` }]} />
+            <View style={[styles.progressFill, { width: `${((currentIndex + 1) / totalQuestions) * 100}%`, backgroundColor: '#FFFFFF' }]} />
           </View>
         </View>
 
@@ -231,7 +272,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
           </View>
         )}
 
-        {/* Bouton vidéo récompensée (bonus) */}
         <TouchableOpacity
           style={[styles.bonusButton, bonusUsed && styles.bonusUsed]}
           onPress={handleWatchRewardedVideo}
@@ -264,6 +304,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   backButtonText: { fontSize: 24, color: '#FFFFFF' },
   headerTitle: {
@@ -277,7 +318,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   scoreBadge: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -300,7 +340,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 5,
   },
   questionContainer: {
