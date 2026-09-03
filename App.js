@@ -8,7 +8,7 @@ import AdminDashboard from './src/screens/AdminDashboard';
 import UserDashboard from './src/screens/UserDashboard';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { initStartio } from './src/services/adService';
-import { loadSounds } from './src/services/soundService';
+import { loadLanguage } from './src/services/i18n';
 
 const ADMIN_EMAIL = 'houssinetrabelsi6@gmail.com';
 
@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     // Initialiser les services
     initStartio();
-    loadSounds();
+    loadLanguage();
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);

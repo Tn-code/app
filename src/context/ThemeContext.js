@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Définition des thèmes disponibles
 export const THEMES = {
   blue: {
     id: 'blue',
@@ -101,6 +100,49 @@ export const THEMES = {
       buttonText: '#FFFFFF',
     },
   },
+  // Nouveaux thèmes
+  pastel: {
+    id: 'pastel',
+    name: 'Pastel',
+    colors: {
+      primary: '#FBBF24',
+      secondary: '#FCD34D',
+      gradient: ['#FCD34D', '#FDE68A'],
+      card: '#FFFFFF',
+      text: '#1A1A1A',
+      background: '#FFFBEB',
+      accent: '#FEF3C7',
+      buttonText: '#FFFFFF',
+    },
+  },
+  night: {
+    id: 'night',
+    name: 'Nuit',
+    colors: {
+      primary: '#0F172A',
+      secondary: '#1E293B',
+      gradient: ['#0F172A', '#1E293B'],
+      card: '#1E293B',
+      text: '#F1F5F9',
+      background: '#0F172A',
+      accent: '#334155',
+      buttonText: '#FFFFFF',
+    },
+  },
+  rainbow: {
+    id: 'rainbow',
+    name: 'Arc-en-ciel',
+    colors: {
+      primary: '#FF6B6B',
+      secondary: '#FFE66D',
+      gradient: ['#FF6B6B', '#FFE66D', '#4ECDC4', '#45B7D1'],
+      card: '#FFFFFF',
+      text: '#1A1A1A',
+      background: '#F5F7FA',
+      accent: '#EEF2FF',
+      buttonText: '#FFFFFF',
+    },
+  },
 };
 
 const ThemeContext = createContext();
@@ -108,7 +150,6 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState('blue');
 
-  // Charger le thème sauvegardé au démarrage
   useEffect(() => {
     const loadTheme = async () => {
       try {
@@ -123,7 +164,6 @@ export const ThemeProvider = ({ children }) => {
     loadTheme();
   }, []);
 
-  // Sauvegarder le thème quand il change
   const changeTheme = async (themeId) => {
     if (THEMES[themeId]) {
       setCurrentTheme(themeId);

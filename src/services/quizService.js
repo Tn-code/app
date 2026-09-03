@@ -24,14 +24,21 @@ export const saveQuiz = async (quizData) => {
   }
 };
 
-export const getQuizzes = async () => {
+export const getQuizzes = async (filters = {}) => {
   try {
+    // Récupère tous les quiz triés par date
     const q = query(collection(db, 'quizzes'), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    const quizzes = [];
+    let quizzes = [];
     querySnapshot.forEach((doc) => {
       quizzes.push({ id: doc.id, ...doc.data() });
     });
+
+    // Filtrage côté client
+    if (filters.category && filters.category !== 'all') {
+      quizzes = quizzes.filter(q => q.category === filters.category);
+    }
+
     return quizzes;
   } catch (error) {
     console.error('Erreur lors de la récupération des quiz:', error);
@@ -51,10 +58,8 @@ export const updateQuiz = async (quizId, quizData) => {
 
 export const deleteQuiz = async (quizId) => {
   try {
-    console.log('deleteQuiz appelé avec ID:', quizId);
     const docRef = doc(db, 'quizzes', quizId);
     await deleteDoc(docRef);
-    console.log('Suppression réussie');
   } catch (error) {
     console.error('Erreur lors de la suppression du quiz:', error);
     throw error;

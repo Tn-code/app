@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, FlatList, View, Text, Platform } from 'react-native';
+import { SafeAreaView, StyleSheet, FlatList, View, Text } from 'react-native';
 import { getQuizzes } from '../services/quizService';
 import Header from '../components/common/Header';
 import QuizForm from '../components/Quiz/QuizForm';
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
       if (editingQuiz) {
         await updateQuiz(editingQuiz.id, quizData);
       } else {
-        await saveQuiz({ ...quizData, createdBy: 'admin' });
+        await saveQuiz(quizData);
       }
       await loadQuizzes();
       setShowForm(false);

@@ -16,8 +16,10 @@ import QuizListScreen from './QuizListScreen';
 import QuizPlayScreen from './QuizPlayScreen';
 import NativeAd from '../components/Ads/NativeAd';
 import ThemePicker from '../components/common/ThemePicker';
+import LanguagePicker from '../components/common/LanguagePicker';
 import { useTheme } from '../context/ThemeContext';
 import { showBanner } from '../services/adService';
+import { t } from '../services/i18n';
 
 export default function UserDashboard() {
   const { colors } = useTheme();
@@ -75,24 +77,27 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
           <View style={styles.welcomeContainer}>
             <Text style={styles.welcomeEmoji}>🌟</Text>
             <Text style={styles.welcomeText}>
-              Salut {auth.currentUser?.email?.split('@')[0] || 'Ami'} !
+              {t('welcome')} {auth.currentUser?.email?.split('@')[0] || 'Ami'} !
             </Text>
-            <Text style={styles.welcomeSubtext}>Prêt à t'amuser ? 🚀</Text>
+            <Text style={styles.welcomeSubtext}>{t('subtitle')}</Text>
           </View>
 
+          {/* Sélecteur de langue */}
+          <LanguagePicker />
+
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>📚 Quiz disponibles</Text>
+            <Text style={styles.sectionTitle}>{t('quizzes')}</Text>
             <QuizListScreen onSelectQuiz={onSelectQuiz} />
           </View>
 
           <NativeAd placement="user_profile" />
 
           <View style={styles.badgeContainer}>
-            <Text style={styles.badgeTitle}>🏆 Tes succès</Text>
+            <Text style={styles.badgeTitle}>🏆 {t('score')}</Text>
             <View style={styles.badgeRow}>
               <View style={styles.badgeItem}>
                 <Text style={styles.badgeEmoji}>⭐</Text>
-                <Text style={styles.badgeText}>0 points</Text>
+                <Text style={styles.badgeText}>0 {t('points')}</Text>
               </View>
               <View style={styles.badgeItem}>
                 <Text style={styles.badgeEmoji}>🎯</Text>
@@ -112,6 +117,7 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
   );
 }
 
+// Styles inchangés
 const styles = StyleSheet.create({
   container: { flex: 1 },
   gradient: { flex: 1 },
