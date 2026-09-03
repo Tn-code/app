@@ -16,6 +16,8 @@ import { useTheme } from '../context/ThemeContext';
 import { showInterstitial, showRewardedVideo } from '../services/adService';
 import { playCorrectSound, playWrongSound, playClickSound } from '../services/soundService';
 import { t } from '../services/i18n';
+import { addUserScore } from '../services/scoreService';
+import { auth } from '../../firebase';
 
 export default function QuizPlayScreen({ quiz, onFinish }) {
   const { colors } = useTheme();
@@ -154,6 +156,11 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   };
 
   const showFinalResult = async () => {
+    // Ajouter le score à Firestore
+    if (auth.currentUser) {
+      await addUserScore(auth.currentUser.uid, score);
+    }
+
     await showInterstitial();
     const totalPoints = totalQuestions * 10;
     const percentage = Math.round((score / totalPoints) * 100);
@@ -340,7 +347,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   );
 }
 
-// Styles (identiques)
+// Styles inchangés
 const styles = StyleSheet.create({
   container: { flex: 1 },
   gradient: { flex: 1 },

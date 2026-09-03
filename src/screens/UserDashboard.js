@@ -23,16 +23,19 @@ import { useTheme } from '../context/ThemeContext';
 import { showBanner } from '../services/adService';
 import { t } from '../services/i18n';
 import { getQuizzes } from '../services/quizService';
+import { getUserScore } from '../services/scoreService';
 
 export default function UserDashboard() {
   const { colors } = useTheme();
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userScore, setUserScore] = useState(0);
 
   useEffect(() => {
     showBanner('bottom');
     loadQuizzes();
+    loadUserScore();
   }, []);
 
   const loadQuizzes = async () => {
@@ -47,12 +50,20 @@ export default function UserDashboard() {
     }
   };
 
+  const loadUserScore = async () => {
+    if (auth.currentUser) {
+      const score = await getUserScore(auth.currentUser.uid);
+      setUserScore(score);
+    }
+  };
+
   const handleSelectQuiz = (quiz) => {
     setSelectedQuiz(quiz);
   };
 
   const handleFinishQuiz = () => {
     setSelectedQuiz(null);
+    loadUserScore(); // Recharger le score après un quiz
   };
 
   const handleLogout = async () => {
@@ -73,6 +84,7 @@ export default function UserDashboard() {
       onSelectQuiz={handleSelectQuiz}
       quizzes={quizzes}
       loading={loading}
+      userScore={userScore}
     />
   );
 }
@@ -82,6 +94,7 @@ function KidsDashboard({
   onSelectQuiz,
   quizzes,
   loading,
+  userScore,
 }) {
   const { colors } = useTheme();
 
@@ -135,7 +148,6 @@ function KidsDashboard({
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerEmoji}>🎈</Text>
@@ -152,7 +164,6 @@ function KidsDashboard({
         >
           <BannerAd position="top" />
 
-          {/* Welcome Section */}
           <View style={styles.welcomeContainer}>
             <Text style={styles.welcomeEmoji}>🌟</Text>
             <Text style={styles.welcomeText}>
@@ -161,14 +172,12 @@ function KidsDashboard({
             <Text style={styles.welcomeSubtext}>{t('subtitle')}</Text>
           </View>
 
-          {/* Language & Theme Pickers */}
           <View style={styles.pickersRow}>
             <View style={styles.pickerWrapper}>
               <LanguagePicker />
             </View>
           </View>
 
-          {/* Quiz List */}
           <View style={styles.quizSection}>
             <Text style={styles.sectionTitle}>📚 {t('quizzes')}</Text>
             {loading ? (
@@ -191,29 +200,28 @@ function KidsDashboard({
             )}
           </View>
 
-          {/* Native Ad */}
           <NativeAd placement="user_profile" />
 
-          {/* Badges / Stats */}
           <View style={styles.badgeContainer}>
             <Text style={styles.badgeTitle}>🏆 {t('score')}</Text>
             <View style={styles.badgeRow}>
               <View style={styles.badgeItem}>
                 <Text style={styles.badgeEmoji}>⭐</Text>
-                <Text style={styles.badgeText}>0 {t('points')}</Text>
+                <Text style={styles.badgeText}>{userScore} {t('points')}</Text>
               </View>
               <View style={styles.badgeItem}>
                 <Text style={styles.badgeEmoji}>🎯</Text>
-                <Text style={styles.badgeText}>0 quiz joués</Text>
+                <Text style={styles.badgeText}>{quizzes.length} quiz joués</Text>
               </View>
               <View style={styles.badgeItem}>
                 <Text style={styles.badgeEmoji}>🏅</Text>
-                <Text style={styles.badgeText}>0 victoires</Text>
+                <Text style={styles.badgeText}>
+                  {userScore >= 100 ? '🏆 Or' : userScore >= 50 ? '🥈 Argent' : '🥉 Bronze'}
+                </Text>
               </View>
             </View>
           </View>
 
-          {/* Theme Picker */}
           <ThemePicker />
 
           <BannerAd position="bottom" />
