@@ -14,7 +14,7 @@ export default function NativeAd({ placement = 'user_profile' }) {
   return (
     <View style={styles.container}>
       <View style={styles.adContainer}>
-        <Image source={{ uri: ad.icon }} style={styles.adIcon} />
+        <Image source={{ uri: ad.icon }} style={styles.adIcon} resizeMode="cover" />
         <View style={styles.adContent}>
           <Text style={styles.adTitle}>{ad.title}</Text>
           <Text style={styles.adDescription} numberOfLines={2}>
@@ -33,8 +33,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 16,
-    padding: 12,
-    marginVertical: 8,
+    padding: 14,
+    marginVertical: 10,
     ...Platform.select({
       web: {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -53,31 +53,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   adIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 14,
   },
   adContent: {
     flex: 1,
   },
   adTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1A1A1A',
   },
   adDescription: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6B7280',
     marginTop: 2,
   },
   adButton: {
     backgroundColor: '#4F46E5',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
     alignSelf: 'flex-start',
-    marginTop: 4,
+    marginTop: 6,
   },
   adButtonText: {
     color: '#FFFFFF',

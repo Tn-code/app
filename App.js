@@ -18,7 +18,6 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => {
-    // Initialiser les services
     initStartio();
     loadLanguage();
 

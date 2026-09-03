@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function BannerAd({ position = 'bottom' }) {
@@ -40,15 +40,11 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  top: {
-    marginTop: 8,
-  },
-  bottom: {
-    marginBottom: 8,
-  },
+  top: { marginTop: 8 },
+  bottom: { marginBottom: 8 },
   gradient: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
   },
   content: {
     flexDirection: 'row',
@@ -56,14 +52,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emoji: {
-    fontSize: 20,
-    marginRight: 8,
+    fontSize: 22,
+    marginRight: 10,
   },
   text: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginRight: 4,
+    marginRight: 6,
   },
   subtext: {
     fontSize: 12,

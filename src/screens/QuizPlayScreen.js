@@ -14,8 +14,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { showInterstitial, showRewardedVideo } from '../services/adService';
+import { playCorrectSound, playWrongSound, playClickSound } from '../services/soundService';
 import { t } from '../services/i18n';
-import Confetti from '../components/Animations/Confetti';
 
 export default function QuizPlayScreen({ quiz, onFinish }) {
   const { colors } = useTheme();
@@ -25,7 +25,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [bonusUsed, setBonusUsed] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -38,7 +37,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   const timeLimit = quiz?.timeLimit || 20;
   const useNativeDriver = Platform.OS !== 'web';
 
-  // Gestion du timer
   useEffect(() => {
     setTimeLeft(timeLimit);
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -46,7 +44,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(intervalRef.current);
-          // Temps écoulé : passer à la question suivante automatiquement
           Alert.alert(t('timeUp'), '');
           goToNextQuestion();
           return 0;
@@ -59,7 +56,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     };
   }, [currentIndex]);
 
-  // Gestion du bouton retour Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       showQuitConfirmation();
@@ -68,7 +64,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     return () => backHandler.remove();
   }, []);
 
-  // Nettoyer les timers
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -76,7 +71,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     };
   }, []);
 
-  // Animation de transition
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver }),
@@ -119,13 +113,9 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     let points = 0;
     if (isCorrect) {
       points = 10;
-      // Bonus de temps : +5 points si réponse rapide (plus de 10 secondes restantes)
-      if (timeLeft > 10) {
-        points += 5;
-        Alert.alert('⏱️ +5 points bonus !');
-      }
+      if (timeLeft > 10) points += 5;
       setScore(prev => prev + points);
-      // Animation de rebond
+      playCorrectSound();
       Animated.spring(scaleAnim, {
         toValue: 1.1,
         friction: 2,
@@ -137,6 +127,8 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
           useNativeDriver: true,
         }).start();
       });
+    } else {
+      playWrongSound();
     }
 
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -155,10 +147,9 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
       });
     } else {
       setIsFinished(true);
-      setShowConfetti(true);
       setTimeout(() => {
         showFinalResult();
-      }, 3000);
+      }, 500);
     }
   };
 
@@ -180,7 +171,6 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
           text: '🏠 Retour à la liste',
           onPress: () => {
             setIsFinished(false);
-            setShowConfetti(false);
             onFinish();
           },
         },
@@ -205,13 +195,11 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.gradient}>
-          <Confetti active={showConfetti} onFinish={() => setShowConfetti(false)} />
           <View style={styles.center}>
             <Text style={styles.finishedText}>🎯 Quiz terminé !</Text>
             <Text style={styles.finishedScore}>Score: {score} points</Text>
             <TouchableOpacity style={styles.finishButton} onPress={() => {
               setIsFinished(false);
-              setShowConfetti(false);
               onFinish();
             }}>
               <Text style={styles.finishButtonText}>🏠 Retour</Text>
@@ -241,7 +229,10 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
       <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.gradient}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={showQuitConfirmation}
+            onPress={() => {
+              playClickSound();
+              showQuitConfirmation();
+            }}
             style={styles.backButton}
             activeOpacity={0.6}
           >
@@ -304,7 +295,10 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
               <TouchableOpacity
                 key={idx}
                 style={optionStyle}
-                onPress={() => handleSelectOption(idx)}
+                onPress={() => {
+                  playClickSound();
+                  handleSelectOption(idx);
+                }}
                 disabled={showFeedback || isFinished}
                 activeOpacity={0.7}
               >
@@ -331,7 +325,10 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
 
         <TouchableOpacity
           style={[styles.bonusButton, bonusUsed && styles.bonusUsed]}
-          onPress={handleWatchRewardedVideo}
+          onPress={() => {
+            playClickSound();
+            handleWatchRewardedVideo();
+          }}
           disabled={bonusUsed}
         >
           <Text style={styles.bonusButtonText}>
@@ -343,7 +340,7 @@ export default function QuizPlayScreen({ quiz, onFinish }) {
   );
 }
 
-// Styles inchangés (identiques à la version précédente)
+// Styles (identiques)
 const styles = StyleSheet.create({
   container: { flex: 1 },
   gradient: { flex: 1 },

@@ -1,0 +1,32 @@
+{
+  "name": "monapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-firebase/firestore": "^26.3.3",
+    "expo": "~57.0.19",
+    "expo-av": "^16.0.8",
+    "expo-build-properties": "~57.0.16",
+    "expo-config-plugins": "^0.1.2",
+    "expo-dev-client": "~57.0.18",
+    "expo-linear-gradient": "~57.0.1",
+    "expo-status-bar": "~57.0.1",
+    "firebase": "^12.18.0",
+    "i18n-js": "^4.5.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-confetti": "^0.1.0",
+    "react-native-startapp": "^1.0.3",
+    "react-native-web": "^0.21.2",
+    "react-native-webview": "13.16.1"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "private": true
+}
