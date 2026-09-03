@@ -5,12 +5,10 @@
   },
   "build": {
     "production": {
+      "node": "20.18.0",
       "android": {
         "buildType": "app-bundle",
-        "image": "ubuntu-22.04-jdk-17-ndk-r25b",
-        "env": {
-          "NODE_VERSION": "20"
-        }
+        "image": "ubuntu-22.04-jdk-17-ndk-r25b"
       }
     }
   },
