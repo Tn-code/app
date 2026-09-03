@@ -6,15 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.devapptn.quizapp",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "bundleIdentifier": "com.devapptn.quizapp"
     },
     "android": {
       "package": "com.devapptn.quizapp",
@@ -26,10 +21,19 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "0aeccc0f-a2e4-44ac-ab3d-781ab620fa06"
-      }
-    }
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0",
+            "minSdkVersion": 23,
+            "gradleVersion": "8.10.2"
+          }
+        }
+      ]
+    ]
   }
 }

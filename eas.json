@@ -7,10 +7,7 @@
     "production": {
       "android": {
         "buildType": "app-bundle",
-        "image": "ubuntu-24.04-jdk-17-ndk-r27b",
-        "env": {
-          "NODE_VERSION": "20"
-        }
+        "image": "ubuntu-22.04-jdk-17-ndk-r25b"
       }
     }
   },
