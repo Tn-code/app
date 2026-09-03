@@ -5,6 +5,7 @@ import Header from '../components/common/Header';
 import QuizForm from '../components/Quiz/QuizForm';
 import QuizItem from '../components/Quiz/QuizItem';
 import Button from '../components/common/Button';
+import BannerAd from '../components/Ads/BannerAd';
 import { showBanner } from '../services/adService';
 
 export default function AdminDashboard() {
@@ -90,6 +91,7 @@ export default function AdminDashboard() {
           style={{ alignSelf: 'flex-start' }}
         />
       </View>
+      <BannerAd position="top" />
       {quizzes.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Aucun quiz créé pour le moment.</Text>
@@ -104,6 +106,7 @@ export default function AdminDashboard() {
           contentContainerStyle={styles.list}
         />
       )}
+      <BannerAd position="bottom" />
     </SafeAreaView>
   );
 }

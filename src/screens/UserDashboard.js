@@ -15,6 +15,7 @@ import { Alert } from 'react-native';
 import QuizListScreen from './QuizListScreen';
 import QuizPlayScreen from './QuizPlayScreen';
 import NativeAd from '../components/Ads/NativeAd';
+import BannerAd from '../components/Ads/BannerAd';
 import ThemePicker from '../components/common/ThemePicker';
 import LanguagePicker from '../components/common/LanguagePicker';
 import { useTheme } from '../context/ThemeContext';
@@ -74,6 +75,8 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          <BannerAd position="top" />
+
           <View style={styles.welcomeContainer}>
             <Text style={styles.welcomeEmoji}>🌟</Text>
             <Text style={styles.welcomeText}>
@@ -82,7 +85,6 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
             <Text style={styles.welcomeSubtext}>{t('subtitle')}</Text>
           </View>
 
-          {/* Sélecteur de langue */}
           <LanguagePicker />
 
           <View style={styles.sectionContainer}>
@@ -111,6 +113,8 @@ function KidsDashboard({ onLogout, onSelectQuiz }) {
           </View>
 
           <ThemePicker />
+
+          <BannerAd position="bottom" />
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
