@@ -4,11 +4,12 @@
     "appVersionSource": "remote"
   },
   "build": {
-    "production": {
+    "preview": {
+      "distribution": "internal",
       "node": "20.18.0",
       "android": {
-        "buildType": "app-bundle",
-        "image": "ubuntu-22.04-jdk-17-ndk-r25b"
+        "image": "ubuntu-22.04-jdk-17-ndk-r25b",
+        "gradle": "8.13"
       }
     }
   },

@@ -1,79 +1,69 @@
 import { Platform } from 'react-native';
 
-// Variables pour stocker les contextes audio (web)
 let audioContext = null;
 
-// Génère un son simple avec l'API Web Audio (pour le web)
-const playWebAudio = (frequency, duration, type = 'sine', volume = 0.3) => {
-  if (Platform.OS !== 'web') return;
-  
-  try {
-    if (!audioContext) {
+const initAudio = () => {
+  if (Platform.OS === 'web' && !audioContext) {
+    try {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      console.warn('Web Audio API non supportée');
     }
+  }
+};
+
+const playTone = (frequency, duration = 150, type = 'sine') => {
+  initAudio();
+  if (!audioContext) return;
+
+  try {
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    oscillator.type = type;
+
     oscillator.frequency.value = frequency;
-    gainNode.gain.value = volume;
-    oscillator.start();
-    setTimeout(() => {
-      oscillator.stop();
-      // Ne pas fermer l'audioContext pour éviter de recréer à chaque fois
-    }, duration);
-    return true;
+    oscillator.type = type;
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration / 1000);
   } catch (e) {
-    console.warn('Erreur lecture son Web Audio:', e);
-    return false;
+    console.warn('Erreur lecture son:', e);
   }
 };
 
-// Fonction principale pour jouer un son selon l'événement
-export const playSoundEvent = (event) => {
-  console.log(`🔊 Son joué: ${event}`);
-  
-  // Sur le web, on utilise l'API Web Audio
+export const playCorrectSound = () => {
   if (Platform.OS === 'web') {
-    switch (event) {
-      case 'click':
-        playWebAudio(660, 100, 'sine', 0.2);
-        break;
-      case 'correct':
-        // Son de succès: deux notes montantes
-        playWebAudio(523, 150, 'sine', 0.3);
-        setTimeout(() => playWebAudio(659, 150, 'sine', 0.3), 150);
-        break;
-      case 'wrong':
-        // Son d'erreur: note grave et courte
-        playWebAudio(220, 300, 'sawtooth', 0.2);
-        break;
-      case 'complete':
-        // Mélodie de victoire: do, mi, sol, do
-        const notes = [523, 659, 784, 1047];
-        notes.forEach((freq, i) => {
-          setTimeout(() => playWebAudio(freq, 200, 'sine', 0.3), i * 150);
-        });
-        break;
-      default:
-        console.warn(`Événement sonore inconnu: ${event}`);
-    }
-    return;
+    playTone(523, 150);
+    setTimeout(() => playTone(659, 150), 200);
+  } else {
+    console.log('🔊 Son correct (mobile)');
   }
-  
-  // Sur mobile, on pourrait utiliser expo-av avec des fichiers locaux
-  // Pour l'instant, on utilise une alternative simple (à compléter)
-  console.warn('Sons sur mobile: à implémenter avec expo-av');
 };
 
-// Fonction de chargement (simulée pour le web)
-export const loadSounds = async () => {
-  console.log('✅ Sons prêts (générés localement)');
-  return Promise.resolve();
+export const playWrongSound = () => {
+  if (Platform.OS === 'web') {
+    playTone(220, 300, 'sawtooth');
+  } else {
+    console.log('🔊 Son incorrect (mobile)');
+  }
 };
 
+// ✅ Fonction playClickSound (manquante)
+export const playClickSound = () => {
+  if (Platform.OS === 'web') {
+    playTone(880, 50);
+  } else {
+    console.log('🔊 Clic (mobile)');
+  }
+};
+
+// ✅ Export par défaut
 export default {
-  playSoundEvent,
-  loadSounds,
+  playCorrectSound,
+  playWrongSound,
+  playClickSound,
 };
